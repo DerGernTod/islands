@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using scripts.services;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -34,12 +35,18 @@ namespace scripts.entities {
             attackSpeed = entityType.AttackSpeed;
             damage = entityType.Damage;
             sprite = entityType.EntitySprite;
+
         }
+        
 
         // Update is called once per frame
         void Update() {
             //TODO: remove after testing
             transform.position = transform.position + movementSpeed * Time.deltaTime * Vector3.right;
+        }
+
+        public void Attack(int targetId) {
+            ServiceLocator.Service<EventService>().Dispatch(EventService.EventType.EntityEventAttack, targetId);
         }
     }
 }

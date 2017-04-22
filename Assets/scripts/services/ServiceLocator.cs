@@ -15,10 +15,14 @@ namespace scripts.services {
             } else {
                 singleton = this;
             }
+
+            services[typeof(EventService)] = new EventService();
         }
         // Use this for initialization
         void Start() {
-            services[typeof(EventService)] = new EventService();
+            foreach(Service s in services.Values) {
+                s.Initialize();
+            }
         }
 
         // Update is called once per frame
