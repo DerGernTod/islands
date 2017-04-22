@@ -6,7 +6,6 @@ using System;
 
 namespace scripts.entities {
     [RequireComponent(typeof(SpriteRenderer))]
-    [RequireComponent(typeof(EntitySoUpdater))]
     public class Entity : MonoBehaviour {
         private static int curId = 0;
 
