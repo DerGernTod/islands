@@ -5,17 +5,24 @@ using UnityEngine;
 namespace scripts.entities {
     [RequireComponent(typeof(SpriteRenderer))]
     public class Entity : MonoBehaviour {
+        private static int curId = 0;
         [SerializeField]
         private EntityType entityType;
 
         private SpriteRenderer spriteRenderer;
 
+        private int id;
         private float maxHealth;
         private float range;
         private float movementSpeed;
         private float attackSpeed;
         private float damage;
         private Sprite sprite;
+        private float currentHealth;
+
+        private void Awake() {
+            id = curId++;
+        }
         // Use this for initialization
         void Start() {
             spriteRenderer = GetComponent<SpriteRenderer>();
