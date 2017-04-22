@@ -1,0 +1,3 @@
+# right click in unity project view -> create -> entity -> entitytype
+# give it some properties
+# use the created SO as argument in an Entity object
