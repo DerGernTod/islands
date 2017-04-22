@@ -1,8 +1,5 @@
 ﻿using scripts.services;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using System;
 
 namespace scripts.entities {
     [RequireComponent(typeof(SpriteRenderer))]
