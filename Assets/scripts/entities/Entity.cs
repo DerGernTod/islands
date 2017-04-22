@@ -2,11 +2,14 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
 namespace scripts.entities {
     [RequireComponent(typeof(SpriteRenderer))]
+    [RequireComponent(typeof(EntitySoUpdater))]
     public class Entity : MonoBehaviour {
         private static int curId = 0;
+
         [SerializeField]
         private EntityType entityType;
 
@@ -17,9 +20,10 @@ namespace scripts.entities {
         private float range;
         private float movementSpeed;
         private float attackSpeed;
-        private float damage;
-        private Sprite sprite;
+        public Sprite Sprite { get; private set; }
         private float currentHealth;
+
+        public float Damage { get; private set; }
 
         private void Awake() {
             id = curId++;
@@ -33,11 +37,16 @@ namespace scripts.entities {
             range = entityType.Range;
             movementSpeed = entityType.MovementSpeed;
             attackSpeed = entityType.AttackSpeed;
-            damage = entityType.Damage;
-            sprite = entityType.EntitySprite;
+            Damage = entityType.Damage;
+            Sprite = entityType.EntitySprite;
 
+            ServiceLocator.Service<EventService>().Dispatch(EventService.EventType.EntityCreate, id, element : this);
         }
-        
+
+        public void TakeDamage(float damage) {
+            
+        }
+
 
         // Update is called once per frame
         void Update() {
@@ -46,7 +55,12 @@ namespace scripts.entities {
         }
 
         public void Attack(int targetId) {
-            ServiceLocator.Service<EventService>().Dispatch(EventService.EventType.EntityEventAttack, targetId);
+            ServiceLocator.Service<EventService>().Dispatch(EventService.EventType.EntityAttack, id, targetId);
+        }
+
+
+        private void OnValidate() {
+            GetComponent<SpriteRenderer>().sprite = entityType.EntitySprite;
         }
     }
 }

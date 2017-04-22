@@ -17,12 +17,18 @@ namespace scripts.services {
             }
 
             services[typeof(EventService)] = new EventService();
+            services[typeof(EntityService)] = new EntityService();
+
+            foreach (Service s in services.Values) {
+                s.Initialize();
+            }
+
+            foreach (Service s in services.Values) {
+                s.PostInitialize();
+            }
         }
         // Use this for initialization
         void Start() {
-            foreach(Service s in services.Values) {
-                s.Initialize();
-            }
         }
 
         // Update is called once per frame
