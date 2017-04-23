@@ -65,8 +65,23 @@ public class SelectionManager : MonoBehaviour {
                         }
                         else
                         {
-                            //TODO: check if is neutral or ally
-                            selectableObject.selectionCircle = Instantiate(enemySelectionCirclePrefab);
+                            PlayerManager.RELATIONTYPE relation = PlayerManager.getRelationBetween(selectableObject.GetComponent<Entity>().ownerID,
+                                GetComponent<PlayerManager>().ownerID);
+                            switch (relation)
+                            {
+                                    case PlayerManager.RELATIONTYPE.ENEMY:
+                                    selectableObject.selectionCircle = Instantiate(enemySelectionCirclePrefab);
+                                        break;
+                                    case PlayerManager.RELATIONTYPE.ALLY:
+                                        selectableObject.selectionCircle = Instantiate(allySelectionCirclePrefab);
+                                        break;
+                                    case PlayerManager.RELATIONTYPE.NEUTRAL:
+                                        selectableObject.selectionCircle = Instantiate(neutralSelectionCirclePrefab);
+                                        break;
+                                default:
+                                    selectableObject.selectionCircle = Instantiate(neutralSelectionCirclePrefab);
+                                    break;
+                            }
                         }
 
                         selectableObject.selectionCircle.transform.SetParent(selectableObject.transform, false);
