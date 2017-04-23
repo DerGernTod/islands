@@ -1,6 +1,8 @@
 ﻿using UnityEngine;
 using UnityEditor;
 using System.Linq;
+using System.Collections;
+
 namespace scripts.terrain {
     public class TerrainEditor : EditorWindow {
         private string terrainName = "";
@@ -18,6 +20,8 @@ namespace scripts.terrain {
         private Color whiteVisible = Color.white;
         private GameObject currentTerrain;
         private string spritePath = "Isometric Block";
+        private float curReloaded = 0;
+        private IEnumerator resourceLoader;
         [MenuItem("Window/Terrain Editor")]
         public static void Init() {
             TerrainEditor editor = GetWindow<TerrainEditor>();
@@ -31,11 +35,26 @@ namespace scripts.terrain {
             reloadResources();
         }
 
+        public void Update() {
+            if (resourceLoader != null) {
+                if (!resourceLoader.MoveNext()) {
+                    resourceLoader = null;
+                }
+                Repaint();
+            }
+        }
+
         private void reloadResources() {
             sprites = Resources.LoadAll<Sprite>(spritePath).Where(e => {
                 return !e.name.EndsWith("_00");
             }).ToArray();
-            textures = sprites.Select(sprite => {
+            resourceLoader = reloadResourcesEnum();
+        }
+
+        private IEnumerator reloadResourcesEnum() {
+            textures = new Texture2D[sprites.Length];
+            for(int i = 0; i < sprites.Length; i++) {
+                Sprite sprite = sprites[i];
                 var croppedTexture = new Texture2D((int)sprite.textureRect.width, (int)sprite.textureRect.height);
                 var pixels = sprite.texture.GetPixels(
                     (int)sprite.textureRect.x,
@@ -44,8 +63,10 @@ namespace scripts.terrain {
                     (int)sprite.textureRect.height);
                 croppedTexture.SetPixels(pixels);
                 croppedTexture.Apply();
-                return croppedTexture;
-            }).ToArray();
+                textures[i] = croppedTexture;
+                curReloaded = i;
+                yield return null; 
+            }
         }
 
         public void OnFocus() {
@@ -67,9 +88,11 @@ namespace scripts.terrain {
             }
 
             spritePath = EditorGUILayout.TextField("Resource path to sprites", spritePath);
-            if (GUILayout.Button("Reload Sprites")) {
+            EditorGUI.BeginDisabledGroup(resourceLoader != null);
+            if (GUILayout.Button(resourceLoader == null ? "Reload Sprites" : "Reloading " + (int)((curReloaded/sprites.Length)*100) + "%")) {
                 reloadResources();
             }
+            EditorGUI.EndDisabledGroup();
 
             groupEnabled = EditorGUILayout.BeginToggleGroup("Optional Settings", groupEnabled);
             myBool = EditorGUILayout.Toggle("Toggle", myBool);
