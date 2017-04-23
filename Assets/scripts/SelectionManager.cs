@@ -1,13 +1,18 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.Text;
+using scripts.entities;
 using UnityEngine;
 
+[RequireComponent(typeof(PlayerManager))]
 public class SelectionManager : MonoBehaviour {
     bool isSelecting = false;
     Vector3 mousePosition1;
 
-    public GameObject selectionCirclePrefab;
+    public GameObject mySelectionCirclePrefab;
+    public GameObject enemySelectionCirclePrefab;
+    public GameObject allySelectionCirclePrefab;
+    public GameObject neutralSelectionCirclePrefab;
 
     void Update() {
         // If we press the left mouse button, begin selection and remember the location of the mouse
@@ -19,8 +24,7 @@ public class SelectionManager : MonoBehaviour {
                 if (selectableObject.selectionCircle != null) {
                     Destroy(selectableObject.selectionCircle.gameObject);
                     selectableObject.selectionCircle = null;
-                    if (selectableObject.GetComponent<ClickToMove>() != null)
-                    {
+                    if (selectableObject.GetComponent<Entity>().ownerID == GetComponent<PlayerManager>().ownerID && selectableObject.GetComponent<ClickToMove>() != null) {
                         selectableObject.GetComponent<ClickToMove>().enabled = false;
                     }
                 }
@@ -49,14 +53,24 @@ public class SelectionManager : MonoBehaviour {
             foreach (var selectableObject in FindObjectsOfType<SelectableUnit>()) {
                 if (IsWithinSelectionBounds(selectableObject.gameObject)) {
                     if (selectableObject.selectionCircle == null) {
-                        selectableObject.selectionCircle = Instantiate(selectionCirclePrefab);
+                        if (selectableObject.GetComponent<Entity>().ownerID == GetComponent<PlayerManager>().ownerID)
+                        {
+                            selectableObject.selectionCircle = Instantiate(mySelectionCirclePrefab);
+
+
+                            if (selectableObject.GetComponent<ClickToMove>() != null)
+                            {
+                                selectableObject.GetComponent<ClickToMove>().enabled = true;
+                            }
+                        }
+                        else
+                        {
+                            //TODO: check if is neutral or ally
+                            selectableObject.selectionCircle = Instantiate(enemySelectionCirclePrefab);
+                        }
+
                         selectableObject.selectionCircle.transform.SetParent(selectableObject.transform, false);
                         selectableObject.selectionCircle.transform.eulerAngles = new Vector3(0, 0, 0);
-
-                        if (selectableObject.GetComponent<ClickToMove>() != null)
-                        {
-                            selectableObject.GetComponent<ClickToMove>().enabled = true;
-                        }
                     }
                 }
                 else {

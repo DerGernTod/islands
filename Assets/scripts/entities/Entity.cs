@@ -19,6 +19,8 @@ namespace scripts.entities {
         private float currentHealth;
         private bool isDead;
 
+        public int ownerID;
+
         public float Damage { get; private set; }
         public Sprite Sprite { get; private set; }
 
