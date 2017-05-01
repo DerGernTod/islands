@@ -17,6 +17,24 @@ namespace scripts.services {
             ServiceLocator.Service<EventService>().EntityAttack += OnEntityAttack;
             ServiceLocator.Service<EventService>().EntityCreate += OnEntityCreate;
             ServiceLocator.Service<EventService>().EntityDeath += OnEntityDeath;
+            ServiceLocator.Service<EventService>().EntitySelected += OnEntitySelected;
+            ServiceLocator.Service<EventService>().EntityDeselected += OnEntityDeselected;
+        }
+
+        private void OnEntitySelected(int id, int ownerId) {
+            if (!entities.ContainsKey(id)) {
+                Debug.LogWarning("An entity was selected but it's id is not available: " + id);
+            } else {
+                entities[id].Select();
+            }
+        }
+
+        private void OnEntityDeselected(int id, int ownerId) {
+            if (!entities.ContainsKey(id)) {
+                Debug.LogWarning("An entity was deselected but it's id is not available: " + id);
+            } else {
+                entities[id].Deselect();
+            }
         }
 
         private void OnEntityDeath(int id) {

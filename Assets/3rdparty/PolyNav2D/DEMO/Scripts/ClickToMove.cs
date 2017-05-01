@@ -1,10 +1,13 @@
 using UnityEngine;
 using System.Collections.Generic;
+using scripts.services;
+using scripts.entities;
 
 //example
 [RequireComponent(typeof(PolyNavAgent))]
 public class ClickToMove : MonoBehaviour{
-	
+
+    private bool canMove = false;
 	private PolyNavAgent _agent;
 	public PolyNavAgent agent{
 		get
@@ -16,8 +19,22 @@ public class ClickToMove : MonoBehaviour{
 		}
 	}
 
-	void Update() {
-		if (Input.GetMouseButton(1)){
+    private void Start() {
+        Entity entity = GetComponent<Entity>();
+        ServiceLocator.Service<EventService>().EntitySelected += (entityId, ownerId) => {
+            if (entityId == entity.ID && entity.ownerID == ownerId) {
+                canMove = true;
+            };
+        };
+        ServiceLocator.Service<EventService>().EntityDeselected += (entityId, ownerId) => {
+            if (entityId == entity.ID && entity.ownerID == ownerId) {
+                canMove = false;
+            };
+        };
+    }
+
+    void Update() {
+		if (canMove && Input.GetMouseButton(1)){
 			agent.SetDestination( Camera.main.ScreenToWorldPoint(Input.mousePosition) );
 		}
 	}

@@ -1,46 +1,37 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using System.Text;
+using System.Linq;
 using scripts.entities;
 using UnityEngine;
 
 [RequireComponent(typeof(PlayerManager))]
 public class SelectionManager : MonoBehaviour {
     bool isSelecting = false;
-    Vector3 mousePosition1;
-
-    public GameObject mySelectionCirclePrefab;
-    public GameObject enemySelectionCirclePrefab;
-    public GameObject allySelectionCirclePrefab;
-    public GameObject neutralSelectionCirclePrefab;
-
+    private Vector3 mousePosition1;
+    private List<SelectableUnit> currentSelection = new List<SelectableUnit>();
+    private int ownerId;
+    private void Start() {
+        ownerId = GetComponent<PlayerManager>().ownerID;
+    }
     void Update() {
         // If we press the left mouse button, begin selection and remember the location of the mouse
         if (Input.GetMouseButtonDown(0)) {
             isSelecting = true;
             mousePosition1 = Input.mousePosition;
+            currentSelection.ForEach(selectableObject => selectableObject.Deselect(ownerId));
+            currentSelection.Clear();
 
-            foreach (var selectableObject in FindObjectsOfType<SelectableUnit>()) {
-                if (selectableObject.selectionCircle != null) {
-                    Destroy(selectableObject.selectionCircle.gameObject);
-                    selectableObject.selectionCircle = null;
-                    if (selectableObject.GetComponent<Entity>().ownerID == GetComponent<PlayerManager>().ownerID && selectableObject.GetComponent<ClickToMove>() != null) {
-                        selectableObject.GetComponent<ClickToMove>().enabled = false;
-                    }
-                }
-            }
         }
         // If we let go of the left mouse button, end selection
         if (Input.GetMouseButtonUp(0)) {
-            var selectedObjects = new List<SelectableUnit>();
-            foreach (var selectableObject in FindObjectsOfType<SelectableUnit>()) {
-                if (IsWithinSelectionBounds(selectableObject.gameObject)) {
-                    selectedObjects.Add(selectableObject);
-                }
-            }
+            var selectedObjects = FindObjectsOfType<SelectableUnit>().Where(selectableObject => IsWithinSelectionBounds(selectableObject.gameObject));
+            currentSelection.AddRange(selectedObjects);
+            currentSelection.ForEach(e => e.Select(ownerId));
+
 
             var sb = new StringBuilder();
-            sb.AppendLine(string.Format("Selecting [{0}] Units", selectedObjects.Count));
+            sb.AppendLine(string.Format("Selecting [{0}] Units", currentSelection.Count));
             foreach (var selectedObject in selectedObjects)
                 sb.AppendLine("-> " + selectedObject.gameObject.name);
             Debug.Log(sb.ToString());
@@ -50,49 +41,13 @@ public class SelectionManager : MonoBehaviour {
 
         // Highlight all objects within the selection box
         if (isSelecting) {
+            var selectablesInArea = FindObjectsOfType<SelectableUnit>().Where(selectableObject => IsWithinSelectionBounds(selectableObject.gameObject));
             foreach (var selectableObject in FindObjectsOfType<SelectableUnit>()) {
                 if (IsWithinSelectionBounds(selectableObject.gameObject)) {
-                    if (selectableObject.selectionCircle == null) {
-                        if (selectableObject.GetComponent<Entity>().ownerID == GetComponent<PlayerManager>().ownerID)
-                        {
-                            selectableObject.selectionCircle = Instantiate(mySelectionCirclePrefab);
-
-
-                            if (selectableObject.GetComponent<ClickToMove>() != null)
-                            {
-                                selectableObject.GetComponent<ClickToMove>().enabled = true;
-                            }
-                        }
-                        else
-                        {
-                            PlayerManager.RELATIONTYPE relation = PlayerManager.getRelationBetween(selectableObject.GetComponent<Entity>().ownerID,
-                                GetComponent<PlayerManager>().ownerID);
-                            switch (relation)
-                            {
-                                    case PlayerManager.RELATIONTYPE.ENEMY:
-                                    selectableObject.selectionCircle = Instantiate(enemySelectionCirclePrefab);
-                                        break;
-                                    case PlayerManager.RELATIONTYPE.ALLY:
-                                        selectableObject.selectionCircle = Instantiate(allySelectionCirclePrefab);
-                                        break;
-                                    case PlayerManager.RELATIONTYPE.NEUTRAL:
-                                        selectableObject.selectionCircle = Instantiate(neutralSelectionCirclePrefab);
-                                        break;
-                                default:
-                                    selectableObject.selectionCircle = Instantiate(neutralSelectionCirclePrefab);
-                                    break;
-                            }
-                        }
-
-                        selectableObject.selectionCircle.transform.SetParent(selectableObject.transform, false);
-                        selectableObject.selectionCircle.transform.eulerAngles = new Vector3(0, 0, 0);
-                    }
+                    selectableObject.CreateSelection(ownerId);
                 }
                 else {
-                    if (selectableObject.selectionCircle != null) {
-                        Destroy(selectableObject.selectionCircle.gameObject);
-                        selectableObject.selectionCircle = null;
-                    }
+                    selectableObject.DestroySelection();
                 }
             }
         }

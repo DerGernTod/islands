@@ -6,8 +6,6 @@ using System.Collections;
 namespace scripts.terrain {
     public class TerrainEditor : EditorWindow {
         private string terrainName = "";
-        private bool groupEnabled;
-        private bool myBool;
         private float scale;
         private Vector2 scrollPosition = Vector2.zero;
         private Texture[] textures = new Texture2D[0];
@@ -189,8 +187,6 @@ namespace scripts.terrain {
             GUI.SetNextControlName("");
             GUI.FocusControl("");
             terrainName = "";
-            groupEnabled = false;
-            myBool = false;
             scale = 0;
         }
     }

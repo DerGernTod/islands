@@ -1,4 +1,5 @@
-﻿using scripts.services;
+﻿using System;
+using scripts.services;
 using UnityEngine;
 
 namespace scripts.entities {
@@ -11,7 +12,7 @@ namespace scripts.entities {
 
         private SpriteRenderer spriteRenderer;
 
-        private int id;
+        public int ID { get; private set; }
         private float maxHealth;
         private float range;
         private float movementSpeed;
@@ -25,7 +26,7 @@ namespace scripts.entities {
         public Sprite Sprite { get; private set; }
 
         private void Awake() {
-            id = curId++;
+            ID = curId++;
         }
         // Use this for initialization
         void Start() {
@@ -40,15 +41,23 @@ namespace scripts.entities {
             Damage = entityType.Damage;
             Sprite = entityType.EntitySprite;
 
-            ServiceLocator.Service<EventService>().Dispatch(EventService.EventType.EntityCreate, id, element : this);
+            ServiceLocator.Service<EventService>().Dispatch(EventService.EventType.EntityCreate, ID, element : this);
+        }
+
+        public void Deselect() {
+            Debug.Log("Entity deselected: ", gameObject);
+        }
+
+        public void Select() {
+            Debug.Log("Entity selected: ", gameObject);
         }
 
         public void TakeDamage(float damage) {
             currentHealth -= damage;
-            Debug.Log("Entity " + id + " got damage, is on " + currentHealth);
+            Debug.Log("Entity " + ID + " got damage, is on " + currentHealth);
             if (currentHealth <= 0) {
                 isDead = true;
-                ServiceLocator.Service<EventService>().Dispatch(EventService.EventType.EntityDeath, id);
+                ServiceLocator.Service<EventService>().Dispatch(EventService.EventType.EntityDeath, ID);
             }
         }
 
@@ -59,15 +68,14 @@ namespace scripts.entities {
         // Update is called once per frame
         void Update() {
             //TODO: remove after testing
-            transform.position = transform.position + movementSpeed * Time.deltaTime * Vector3.right;
-            if (id == 0) {
+            if (ID == 0) {
                 if (Input.GetKeyDown(KeyCode.Alpha1)) Attack(1);
                 if (Input.GetKeyDown(KeyCode.Alpha2)) Attack(2);
             }
         }
 
         public void Attack(int targetId) {
-            ServiceLocator.Service<EventService>().Dispatch(EventService.EventType.EntityAttack, id, targetId);
+            ServiceLocator.Service<EventService>().Dispatch(EventService.EventType.EntityAttack, ID, targetId);
         }
 
 

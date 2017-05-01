@@ -5,24 +5,25 @@ using System.Collections.Generic;
 using UnityEngine;
 namespace scripts.services {
     public class EventService : Service {
-        public event OnEntityAttack EntityAttack;
-        public event OnEntityDamage EntityDamage;
-        public event OnEntityCreate EntityCreate;
-        public event OnEntityDeath EntityDeath;
-        public event OnEntityRemove EntityRemove;
+        public event Action<int, int> EntityAttack;
+        public event Action<int, int> EntityDamage;
+        public event Action<int, Entity> EntityCreate;
+        public event Action<int> EntityDeath;
+        public event Action<int> EntityRemove;
 
-        public delegate void OnEntityDamage(int sourceId, int targetId);
-        public delegate void OnEntityAttack(int sourceId, int targetId);
-        public delegate void OnEntityCreate(int entityId, Entity entity);
-        public delegate void OnEntityRemove(int entityId);
-        public delegate void OnEntityDeath(int entityId);
+        //entityId, selectionOwnerId
+        public event Action<int, int> EntitySelected;
+        public event Action<int, int> EntityDeselected;
+
 
         public enum EventType {
             EntityAttack,
             EntityDamage,
             EntityCreate,
             EntityDeath,
-            EntityRemove
+            EntityRemove,
+            EntitySelect,
+            EntityDeselect
         }
 
         public override void Initialize() {
@@ -49,6 +50,15 @@ namespace scripts.services {
                     break;
                 case EventType.EntityRemove:
                     if (EntityRemove != null) EntityRemove(sourceId);
+                    break;
+                case EventType.EntitySelect:
+                    if (EntitySelected != null) EntitySelected(sourceId, targetId);
+                    break;
+                case EventType.EntityDeselect:
+                    if (EntityDeselected != null) EntityDeselected(sourceId, targetId);
+                    break;
+                default:
+                    Debug.LogWarning("No event specified for " + eventType);
                     break;
             }
         }
