@@ -28,6 +28,7 @@ namespace scripts.terrain {
         [MenuItem("Window/Terrain Editor")]
         public static void Init() {
             TerrainEditor editor = GetWindow<TerrainEditor>();
+            editor.titleContent = new GUIContent("Terrain Editor");
             editor.Show();
         }
 
@@ -108,10 +109,8 @@ namespace scripts.terrain {
 
             float prevScale = scale;
             scale = Mathf.Round(EditorGUILayout.Slider("Scale", scale, 0.05f, 1) / .05f) * .05f;
-            if (Mathf.Abs(prevScale - scale) > float.Epsilon) {
-                if (currentSceneObject != null) {
-                    DestroyImmediate(currentSceneObject.gameObject);
-                }
+            if (Mathf.Abs(prevScale - scale) > float.Epsilon && currentSceneObject != null) {
+                DestroyImmediate(currentSceneObject.gameObject);
                 overrideCurrentSceneTile();
             }
 
@@ -157,6 +156,7 @@ namespace scripts.terrain {
             mousePosition.y = sceneView.camera.pixelHeight - mousePosition.y;
             mousePosition = sceneView.camera.ScreenToWorldPoint(mousePosition);
             if (currentSceneObject) {
+                Debug.Log("urrent scene object is " + currentSceneObject.name);
                 currentSceneObject.transform.position = snapToSpriteSize(mousePosition);
 
                 Event current = Event.current;
