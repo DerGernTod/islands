@@ -154,7 +154,6 @@ namespace scripts.terrain {
             mousePosition.y = sceneView.camera.pixelHeight - mousePosition.y;
             mousePosition = sceneView.camera.ScreenToWorldPoint(mousePosition);
             if (currentSceneObject) {
-                Debug.Log("urrent scene object is " + currentSceneObject.name);
                 currentSceneObject.transform.position = snapToSpriteSize(mousePosition);
 
                 Event current = Event.current;
