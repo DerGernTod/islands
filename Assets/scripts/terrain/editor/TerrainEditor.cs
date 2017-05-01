@@ -8,7 +8,7 @@ namespace scripts.terrain {
         private string terrainName = "";
         private bool groupEnabled;
         private bool myBool;
-        private float myFloat;
+        private float scale;
         private Vector2 scrollPosition = Vector2.zero;
         private Texture[] textures = new Texture2D[0];
         private Sprite[] sprites = new Sprite[0];
@@ -22,6 +22,9 @@ namespace scripts.terrain {
         private string spritePath = "Isometric Block";
         private float curReloaded = 0;
         private IEnumerator resourceLoader;
+
+        private GUIStyle btnStyle;
+
         [MenuItem("Window/Terrain Editor")]
         public static void Init() {
             TerrainEditor editor = GetWindow<TerrainEditor>();
@@ -31,6 +34,7 @@ namespace scripts.terrain {
         public void Awake() {
             string terrainTilePrefabPath = "prefabs/terrain/TerrainTile";
             Debug.Log("[Terrain Editor] reading terrain tile prefab from '" + terrainTilePrefabPath + "'");
+            
             terrainTilePrefab = Resources.Load<TerrainTile>(terrainTilePrefabPath);
             reloadResources();
         }
@@ -77,8 +81,18 @@ namespace scripts.terrain {
         public void OnDestroy() {
             SceneView.onSceneGUIDelegate -= onSceneGUI;
         }
+
         public void OnGUI() {
+            if (btnStyle == null) {
+                btnStyle = new GUIStyle(GUI.skin.button) {
+                    fixedWidth = 50,
+                    fixedHeight = 50
+                };
+            }
             GUILayout.Label("Terrain Settings", EditorStyles.boldLabel);
+
+            EditorGUI.BeginDisabledGroup(resourceLoader != null);
+
             terrainName = EditorGUILayout.TextField("Terrain name", terrainName);
 
             if (GUILayout.Button("Create Terrain")) {
@@ -88,20 +102,20 @@ namespace scripts.terrain {
             }
 
             spritePath = EditorGUILayout.TextField("Resource path to sprites", spritePath);
-            EditorGUI.BeginDisabledGroup(resourceLoader != null);
             if (GUILayout.Button(resourceLoader == null ? "Reload Sprites" : "Reloading " + (int)((curReloaded/sprites.Length)*100) + "%")) {
                 reloadResources();
             }
-            EditorGUI.EndDisabledGroup();
 
-            groupEnabled = EditorGUILayout.BeginToggleGroup("Optional Settings", groupEnabled);
-            myBool = EditorGUILayout.Toggle("Toggle", myBool);
-            myFloat = EditorGUILayout.Slider("Slider", myFloat, -3, 3);
-            EditorGUILayout.EndToggleGroup();
-            GUIStyle btnStyle = new GUIStyle(GUI.skin.button) {
-                fixedWidth = 50,
-                fixedHeight = 50
-            };
+            float prevScale = scale;
+            scale = Mathf.Round(EditorGUILayout.Slider("Scale", scale, 0.05f, 1) / .05f) * .05f;
+            if (Mathf.Abs(prevScale - scale) > float.Epsilon) {
+                if (currentSceneObject != null) {
+                    DestroyImmediate(currentSceneObject.gameObject);
+                }
+                overrideCurrentSceneTile();
+            }
+
+            
             scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition);
             enabledTextureId = GUILayout.SelectionGrid(enabledTextureId, textures, 5, btnStyle);
             if (enabledTextureId >= 0 && enabledTextureId != prevEnabledTextureId) {
@@ -118,23 +132,24 @@ namespace scripts.terrain {
             EditorGUILayout.EndScrollView();
 
             prevEnabledTextureId = enabledTextureId;
-
+            EditorGUI.EndDisabledGroup();
         }
-        private Vector2 snapToSpriteSize(Vector2 val) {
+
+        private Vector3 snapToSpriteSize(Vector2 val) {
             
             float x = val.x;
             float y = val.y;
             Vector2 extents = currentSceneObject.GetComponent<SpriteRenderer>().sprite.bounds.extents;
-            float height = extents.y / 2;
-            float width = extents.x * 2;
+            float height = scale * extents.y / 2;
+            float width = scale * extents.x * 2;
             float offset = 0;
             float yPosResult = Mathf.Round((y + height / 2) / height) * height;
             if (Mathf.Abs(Mathf.Round(yPosResult / height) % 2) == 1) {
-                offset = extents.x;
+                offset = width / 2;
                 x -= offset;
             }
 
-            return new Vector2(Mathf.Round(x / width) * width + offset, yPosResult);
+            return new Vector3(Mathf.Round(x / width) * width + offset, yPosResult, yPosResult);
         }
 
         private void onSceneGUI(SceneView sceneView) {
@@ -142,10 +157,7 @@ namespace scripts.terrain {
             mousePosition.y = sceneView.camera.pixelHeight - mousePosition.y;
             mousePosition = sceneView.camera.ScreenToWorldPoint(mousePosition);
             if (currentSceneObject) {
-                Vector2 roundedPosition = snapToSpriteSize(mousePosition);
-                currentSceneObject.transform.position = roundedPosition;
-                currentSceneObject.GetComponent<SpriteRenderer>().sortingOrder = -(int)roundedPosition.y;
-
+                currentSceneObject.transform.position = snapToSpriteSize(mousePosition);
 
                 Event current = Event.current;
                 if (current.type == EventType.MouseUp) {
@@ -169,6 +181,7 @@ namespace scripts.terrain {
             currentSceneObject = Instantiate(terrainTilePrefab);
             currentSceneObject.GetComponent<SpriteRenderer>().sprite = sprites[enabledTextureId];
             currentSceneObject.GetComponent<SpriteRenderer>().color = whiteAlpha;
+            currentSceneObject.transform.localScale = Vector2.one * scale;
             Selection.activeGameObject = currentSceneObject.gameObject;
         }
 
@@ -178,7 +191,7 @@ namespace scripts.terrain {
             terrainName = "";
             groupEnabled = false;
             myBool = false;
-            myFloat = 0;
+            scale = 0;
         }
     }
 }
